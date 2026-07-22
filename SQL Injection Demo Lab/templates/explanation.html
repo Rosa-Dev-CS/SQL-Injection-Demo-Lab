@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exploit Info & Comparison - SQL Injection Lab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <a href="{{ url_for('home') }}" class="logo-link">
+                <span class="logo-text"><span class="logo-accent">SQLi</span> LABS</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Home</a></li>
+                    <li><a href="{{ url_for('vulnerable_login') }}">Vulnerable Login</a></li>
+                    <li><a href="{{ url_for('secure_login') }}">Secure Login</a></li>
+                    <li class="active"><a href="{{ url_for('explanation') }}">Exploit Info</a></li>
+                    <li>
+                        <form action="{{ url_for('reset_db') }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn-reset-nav">Reset DB</button>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <a href="{{ url_for('home') }}" class="back-link">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back to Dashboard
+        </a>
+
+        <!-- Section 1: Comparison Table -->
+        <section class="card" style="margin-bottom: 2.5rem; padding: 2.5rem;">
+            <div>
+                <span class="badge badge-info">Comparison Matrix</span>
+                <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Vulnerable vs. Secure Architecture</h2>
+                <p>Compare how different coding practices change the safety profile of an application's database interactions:</p>
+            </div>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Vulnerable Login</th>
+                        <th style="width: 50%;">Secure Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>String Concatenation</strong><br>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Inputs are merged directly into the SQL query command string.</span>
+                        </td>
+                        <td>
+                            <strong>Parameterized Queries (Prepared Statements)</strong><br>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Inputs are separated entirely from the SQL query syntax.</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="badge badge-danger">Unsafe Code Structure</span><br>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Treats strings as code commands.</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-success">Safe Code Structure</span><br>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Treats strings strictly as database variables.</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong style="color: var(--error);">SQL Injection Possible</strong><br>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Attakers can bypass logins, delete tables, or read sensitive data.</span>
+                        </td>
+                        <td>
+                            <strong style="color: var(--success);">SQL Injection Prevented</strong><br>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Database ignores SQL command syntax within inputs, stripping payloads.</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 2: Core Theory -->
+        <section class="dashboard-grid">
+            <!-- Theory: What & How -->
+            <div class="card">
+                <div>
+                    <h2>What is SQL Injection?</h2>
+                    <p>
+                        SQL Injection (SQLi) is a common vulnerability where an attacker manipulates user-input forms to send unauthorized instructions directly to the database. By injecting characters like single quotes <code>'</code>, double dashes <code>--</code>, or logic statements (like <code>OR 1=1</code>), the input escapes the text boundary and gets interpreted as code.
+                    </p>
+                    
+                    <h3 style="font-size: 1.1rem; margin-top: 1.5rem; color: var(--primary); margin-bottom: 0.5rem;">How it works (Visual Flow)</h3>
+                    <p style="font-size: 0.85rem; line-height: 1.5;">
+                        1. User inputs: <code>admin' --</code><br>
+                        2. Server concatenates inputs directly into database code.<br>
+                        3. Database evaluates <code>'--'</code> as a comment marker.<br>
+                        4. DB ignores the check password constraint.<br>
+                        5. Attacker successfully gains administrator access!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Danger & Impact -->
+            <div class="card">
+                <div>
+                    <h2>Why is it Dangerous?</h2>
+                    <p>
+                        SQL Injection remains one of the top critical web application vulnerabilities (ranking consistently high on OWASP Top 10 lists). The impacts can be devastating for organizations:
+                    </p>
+                    <ul style="padding-left: 1.25rem; font-size: 0.9rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                        <li><strong>Data Theft:</strong> Attackers can bypass authentication to read sensitive credentials, customer databases, or proprietary info.</li>
+                        <li><strong>Data Modification:</strong> Attackers can run updates to alter accounting tables, change credentials, or corrupt databases.</li>
+                        <li><strong>Complete Control:</strong> In some environments, SQLi enables database administration exploits or remote system command execution.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Remediation & Prevention -->
+        <section class="explanation-pane" style="margin-top: 2.5rem; border-color: rgba(0, 210, 255, 0.2);">
+            <h3 style="color: var(--primary);">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                Best Practices for Prevention
+            </h3>
+            <p>
+                Developers must never rely solely on basic client-side check blocks or input sanitization (like filtering out single quotes) because attackers can find bypass strategies. Instead, apply these secure development models:
+            </p>
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; align-items: start;">
+                <div style="background: rgba(8, 12, 20, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                    <strong style="color: var(--success); font-size: 0.95rem; display: block; margin-bottom: 5px;">1. Parameterized Queries (Primary Defense)</strong>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">
+                        Use pre-compiled prepared statements. Modern Object-Relational Mappers (ORMs) like SQLAlchemy, Hibernate, or Django DB layer use parameterization by default.
+                    </p>
+                </div>
+                <div style="background: rgba(8, 12, 20, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                    <strong style="color: var(--success); font-size: 0.95rem; display: block; margin-bottom: 5px;">2. Principle of Least Privilege</strong>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">
+                        Ensure database accounts used by web apps only possess permissions necessary for their direct role (e.g. read/write, but no table deletion or schema altering permissions).
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div>SQL Injection Demo Lab © 2026</div>
+            <div>Designed for Cybersecurity Fundamentals Training</div>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Login - SQL Injection Lab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <a href="{{ url_for('home') }}" class="logo-link">
+                <span class="logo-text"><span class="logo-accent">SQLi</span> LABS</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Home</a></li>
+                    <li><a href="{{ url_for('vulnerable_login') }}">Vulnerable Login</a></li>
+                    <li class="active"><a href="{{ url_for('secure_login') }}">Secure Login</a></li>
+                    <li><a href="{{ url_for('explanation') }}">Exploit Info</a></li>
+                    <li>
+                        <form action="{{ url_for('reset_db') }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn-reset-nav">Reset DB</button>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <a href="{{ url_for('home') }}" class="back-link">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back to Dashboard
+        </a>
+
+        <div class="lab-container">
+            <!-- Left Side: Login Form & Safe Execution Output -->
+            <div>
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div>
+                        <span class="badge badge-success">Secure Node</span>
+                        <h2>Secure System Login</h2>
+                        <p style="margin-bottom: 1.5rem;">
+                            This login forms binds inputs safely as query parameters, rendering injection payloads completely harmless.
+                        </p>
+                    </div>
+
+                    <form action="{{ url_for('secure_login') }}" method="POST">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" class="form-control" placeholder="e.g. admin" value="{{ username }}" required autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="e.g. admin123" value="{{ password }}" required autocomplete="off">
+                        </div>
+                        
+                        <!-- Client-Side Educational Warning Box (Real-time JS check) -->
+                        <div id="warningBox" class="warning-box">
+                            <h4>
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Educational Warning: SQLi Characters Detected!
+                            </h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">
+                                You typed inputs that look like SQL injection indicators. Watch how the secure database safely neutralizes them below:
+                            </p>
+                            <ul id="warningList"></ul>
+                        </div>
+
+                        <div style="margin-top: 1.5rem;">
+                            <button type="submit" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, var(--success), #00b050); box-shadow: 0 4px 15px rgba(0, 230, 118, 0.25);">Submit Secure Query</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Database Result / Execution Output Console -->
+                {% if status %}
+                <div class="console-box" style="border-color: rgba(0, 230, 118, 0.25);">
+                    <div class="console-header" style="background-color: #081510;">
+                        <span class="console-dot dot-red"></span>
+                        <span class="console-dot dot-yellow"></span>
+                        <span class="console-dot dot-green"></span>
+                        <span class="console-title" style="color: var(--success);">Parameterized Query Execution Logs</span>
+                    </div>
+                    <div class="console-body">
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong style="color: var(--success);">Static Query Statement:</strong>
+                            <div class="sql-query" style="background: rgba(255,255,255,0.02); padding: 8px; border-radius: 4px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05); margin-top: 4px;">
+                                <span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users <span class="sql-keyword">WHERE</span> username = <span class="sql-string">?</span> <span class="sql-keyword">AND</span> password = <span class="sql-string">?</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong style="color: var(--success);">Bound Parameters (Treated strictly as data):</strong>
+                            <div style="padding-left: 10px; font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px;">
+                                Parameter 1 (username): <span class="sql-string">"{{ username }}"</span><br>
+                                Parameter 2 (password): <span class="sql-string">"{{ password }}"</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <strong style="color: var(--success);">Result Status:</strong>
+                            {% if status == 'success' %}
+                                <div class="alert-message alert-success" style="margin-top: 5px; padding: 8px 12px; margin-bottom: 0;">
+                                    <span class="alert-title">{{ message }}</span>
+                                </div>
+                                {% if users %}
+                                    <div style="margin-top: 10px; overflow-x: auto;">
+                                        <table class="user-table" style="background: #090e15;">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Username</th>
+                                                    <th>Password</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in users %}
+                                                <tr>
+                                                    <td>{{ user.id }}</td>
+                                                    <td>{{ user.username }}</td>
+                                                    <td>{{ user.password }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="alert-message alert-failure" style="margin-top: 5px; padding: 8px 12px; margin-bottom: 0;">
+                                    <span class="alert-title">{{ message }}</span>
+                                </div>
+                                <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                    💡 <em>Why did this fail?</em> The DB looked for a user with the literal username: <code style="color: var(--warning);">{{ username }}</code>, and there is no such user. The injection payload was stripped of command context completely.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Side: Explanation of Parameterization -->
+            <div class="explanation-pane" style="background: rgba(0, 230, 118, 0.02); border-color: rgba(0, 230, 118, 0.15);">
+                <h3 style="color: var(--success);">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    Why Parameterization Works
+                </h3>
+                <p>
+                    Instead of merging user strings with raw commands, a <strong>parameterized query</strong> divides execution into two phases:
+                </p>
+                <ol style="padding-left: 1.25rem; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <strong>Compilation Phase:</strong> The SQL statement <code>SELECT * FROM users WHERE username = ? AND password = ?</code> is sent to the DB driver and pre-compiled as a structured blueprint.
+                    </li>
+                    <li style="margin-bottom: 0.5rem;">
+                        <strong>Execution Phase:</strong> The driver passes input variables directly into the placeholders (<code>?</code>). Because the compilation step has already finished, the engine treats parameter data as literal strings, not instructions.
+                    </li>
+                </ol>
+
+                <div class="highlight-box" style="background: rgba(0, 210, 255, 0.03); border-left-color: var(--primary);">
+                    <h4>Try the same SQL Injection attacks:</h4>
+                    <p style="font-size: 0.85rem; margin-top: 5px; color: var(--text-muted);">
+                        Input <code>' OR 1=1 --</code> in the username box. Notice that instead of letting you bypass credentials, the system outputs <strong>"Invalid username or password"</strong>.
+                    </p>
+                </div>
+                
+                <p style="font-size: 0.85rem; color: var(--text-muted);">
+                    The SQLite query engine literally searches the database for a user whose actual name is <code>' OR 1=1 --</code>. Since that doesn't exist, the login fails safely.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div>SQL Injection Demo Lab © 2026</div>
+            <div>Designed for Cybersecurity Fundamentals Training</div>
+        </div>
+    </footer>
+
+    <!-- Real-time Warning Scanner Script -->
+    <script>
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const warningBox = document.getElementById('warningBox');
+        const warningList = document.getElementById('warningList');
+
+        const sqliPatterns = {
+            "'": "Single Quote (') - Breaks out of SQL string literals.",
+            '"': "Double Quote (\") - Breaks out of SQL string literals.",
+            "--": "Double Dash (--) - Inlines a comment to ignore subsequent SQL constraints.",
+            "#": "Hash (#) - Comment indicator in SQLite/MySQL.",
+            "/*": "Multi-line Comment Start (/*) - Used to comments out blocks of SQL.",
+            "union": "UNION keyword - Used to combine results from multiple SELECT queries.",
+            "select": "SELECT keyword - Used to retrieve records.",
+            "or": "OR operator - Used to force logic checks to resolve to TRUE (e.g. OR 1=1)."
+        };
+
+        function checkInputs() {
+            const userVal = usernameInput.value.toLowerCase();
+            const passVal = passwordInput.value.toLowerCase();
+            const combined = userVal + " " + passVal;
+            
+            let warnings = [];
+            for (const [key, desc] of Object.entries(sqliPatterns)) {
+                if (combined.includes(key)) {
+                    warnings.push(desc);
+                }
+            }
+
+            if (warnings.length > 0) {
+                warningBox.style.display = 'block';
+                warningList.innerHTML = warnings.map(w => `<li>${w}</li>`).join('');
+            } else {
+                warningBox.style.display = 'none';
+                warningList.innerHTML = '';
+            }
+        }
+
+        usernameInput.addEventListener('input', checkInputs);
+        passwordInput.addEventListener('input', checkInputs);
+
+        // Run once on page load in case of filled values
+        checkInputs();
+    </script>
+</body>
+</html>

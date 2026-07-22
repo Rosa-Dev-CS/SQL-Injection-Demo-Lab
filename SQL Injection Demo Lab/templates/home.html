@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Injection Demo Lab - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <a href="{{ url_for('home') }}" class="logo-link">
+                <span class="logo-text"><span class="logo-accent">SQLi</span> LABS</span>
+            </a>
+            <nav>
+                <ul>
+                    <li class="active"><a href="{{ url_for('home') }}">Home</a></li>
+                    <li><a href="{{ url_for('vulnerable_login') }}">Vulnerable Login</a></li>
+                    <li><a href="{{ url_for('secure_login') }}">Secure Login</a></li>
+                    <li><a href="{{ url_for('explanation') }}">Exploit Info</a></li>
+                    <li>
+                        <form action="{{ url_for('reset_db') }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn-reset-nav" title="Resets sqlite database to default credentials">Reset DB</button>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <span class="badge badge-info">Safe Learning Environment</span>
+            <h1>Welcome to the <br><span class="hero-glow-text">SQL Injection Demo Lab</span></h1>
+            <p>
+                An interactive cybersecurity lab designed to demonstrate the mechanics of SQL Injection (SQLi) attacks and how to implement defense measures using Parameterized Queries.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <a href="{{ url_for('vulnerable_login') }}" class="btn btn-primary">Try Vulnerable Login</a>
+                <a href="{{ url_for('secure_login') }}" class="btn btn-secondary">Try Secure Login</a>
+            </div>
+        </section>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="alert-container">
+              {% for message in messages %}
+                <div class="alert-message alert-success">
+                  <div class="alert-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Success
+                  </div>
+                  <div class="alert-description">{{ message }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Laboratory Sections -->
+        <section class="dashboard-grid">
+            <!-- Vulnerable Node -->
+            <div class="card">
+                <div>
+                    <span class="badge badge-danger">Vulnerable Node</span>
+                    <h2>Insecure Login Page</h2>
+                    <p>
+                        This system dynamically constructs SQL statements via direct string interpolation. This allows user input to break out of the string boundary and modify the query structure.
+                    </p>
+                    <div class="highlight-box">
+                        <strong>Vulnerable Code:</strong>
+                        <code style="font-family: var(--font-mono); font-size: 0.8rem; display: block; margin-top: 5px; color: #ff5c7d;">
+                            "SELECT * FROM users WHERE username = '" + user + "' AND password = '" + pass + "'"
+                        </code>
+                    </div>
+                </div>
+                <a href="{{ url_for('vulnerable_login') }}" class="btn btn-secondary" style="width: 100%; border-color: rgba(255, 56, 96, 0.3);">Access Vulnerable System</a>
+            </div>
+
+            <!-- Secure Node -->
+            <div class="card">
+                <div>
+                    <span class="badge badge-success">Secure Node</span>
+                    <h2>Secure Login Page</h2>
+                    <p>
+                        This system uses parameterized SQL execution (prepared statements). The user inputs are treated strictly as parameter values, preventing SQL engines from executing them as commands.
+                    </p>
+                    <div class="highlight-box" style="border-left-color: var(--success);">
+                        <strong>Secure Code:</strong>
+                        <code style="font-family: var(--font-mono); font-size: 0.8rem; display: block; margin-top: 5px; color: #a7f3d0;">
+                            db.execute("SELECT * FROM users WHERE username = ? AND password = ?", (user, pass))
+                        </code>
+                    </div>
+                </div>
+                <a href="{{ url_for('secure_login') }}" class="btn btn-secondary" style="width: 100%; border-color: rgba(0, 230, 118, 0.3);">Access Secure System</a>
+            </div>
+        </section>
+
+        <!-- Database View & Educational Tips -->
+        <section style="margin-top: 4rem;">
+            <div class="section-header">
+                <h3>Lab Database Accounts (SQLite)</h3>
+            </div>
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; align-items: start;">
+                <div>
+                    <p style="margin-bottom: 1rem;">
+                        The local database table <code>users</code> is initialized with the following testing credentials. You can use these to test standard successful logins, or target these usernames when simulating injection exploits.
+                    </p>
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Password (Demo Plaintext)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>admin</td>
+                                <td>admin123</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>student</td>
+                                <td>learn_sql_2026</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>guest</td>
+                                <td>guestpass</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="explanation-pane" style="height: 100%;">
+                    <h3>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        Try these exploits in the Vulnerable Login!
+                    </h3>
+                    <ul>
+                        <li><strong>Bypass login entirely:</strong> Enter <code>' OR 1=1 --</code> in the username box with any password.</li>
+                        <li><strong>Login as admin without password:</strong> Enter <code>admin' --</code> in the username box with any password.</li>
+                        <li><strong>Bypass username constraints:</strong> Enter <code>' OR username='admin' --</code> in the username box.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div>SQL Injection Demo Lab © 2026</div>
+            <div>Designed for Cybersecurity Fundamentals Training</div>
+        </div>
+    </footer>
+
+</body>
+</html>
